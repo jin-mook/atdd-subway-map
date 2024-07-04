@@ -10,7 +10,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,8 +27,7 @@ public class StationAcceptanceTest {
     @Test
     void createStation() {
         // when
-        Map<String, String> params = new HashMap<>();
-        params.put("name", "강남역");
+        Map<String, String> params = makeStationRequestBody("강남역");
 
         ExtractableResponse<Response> response =
                 RestAssured.given().log().all()
@@ -60,8 +58,8 @@ public class StationAcceptanceTest {
     @Test
     void showStations() {
         // given
-        Map<String, String> body1 = Map.of("name", "station1");
-        Map<String, String> body2 = Map.of("name", "station2");
+        Map<String, String> body1 = makeStationRequestBody("station1");
+        Map<String, String> body2 = makeStationRequestBody("station2");
 
         RestAssured
                 .given()
@@ -101,8 +99,8 @@ public class StationAcceptanceTest {
     @Test
     void deleteStations() {
         // given
-        Map<String, String> body1 = Map.of("name", "station1");
-        Map<String, String> body2 = Map.of("name", "station2");
+        Map<String, String> body1 = makeStationRequestBody("station1");
+        Map<String, String> body2 = makeStationRequestBody("station2");
 
         long stationId = RestAssured
                 .given()
@@ -140,5 +138,9 @@ public class StationAcceptanceTest {
         // then
         Assertions.assertThat(result).hasSize(1);
         Assertions.assertThat(result).containsExactly("station2");
+    }
+
+    private Map<String, String> makeStationRequestBody(String name) {
+        return Map.of("name", name);
     }
 }
