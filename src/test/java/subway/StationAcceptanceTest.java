@@ -8,10 +8,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import subway.util.StationAssuredTemplate;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,15 +26,9 @@ public class StationAcceptanceTest {
     @Test
     void createStation() {
         // when
-        Map<String, String> params = makeStationRequestBody("강남역");
-
-        ExtractableResponse<Response> response =
-                RestAssured.given().log().all()
-                        .body(params)
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .when().post("/stations")
-                        .then().log().all()
-                        .extract();
+        ExtractableResponse<Response> response = StationAssuredTemplate.createStation("강남역")
+                .then().log().all()
+                .extract();
 
         // then
         assertThat(response.statusCode()).isEqualTo(HttpStatus.CREATED.value());
@@ -58,36 +51,20 @@ public class StationAcceptanceTest {
     @Test
     void showStations() {
         // given
-        Map<String, String> body1 = makeStationRequestBody("station1");
-        Map<String, String> body2 = makeStationRequestBody("station2");
+        String firstStationName = "station1";
+        String secondStationName = "station2";
 
-        RestAssured
-                .given()
-                .log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .body(body1)
-                .when()
-                .post("/stations");
-
-        RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .body(body2)
-                .when()
-                .post("/stations");
+        StationAssuredTemplate.createStation(firstStationName);
+        StationAssuredTemplate.createStation(secondStationName);
 
         // when
-        List<String> stationList = RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .when()
-                .get("/stations")
+        List<String> stationList = StationAssuredTemplate.showStations()
                 .then().log().all()
                 .extract().jsonPath().getList("name", String.class);
 
         // then
         assertThat(stationList).hasSize(2);
-        assertThat(stationList).containsExactly("station1", "station2");
+        assertThat(stationList).containsExactly(firstStationName, secondStationName);
     }
 
     /**
@@ -99,48 +76,23 @@ public class StationAcceptanceTest {
     @Test
     void deleteStations() {
         // given
-        Map<String, String> body1 = makeStationRequestBody("station1");
-        Map<String, String> body2 = makeStationRequestBody("station2");
+        String firstStationName = "station1";
+        String secondStationName = "station2";
 
-        long stationId = RestAssured
-                .given()
-                .log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .body(body1)
-                .when()
-                .post("/stations")
-                .then().extract().jsonPath().getLong("id");
+        long stationId = StationAssuredTemplate.createStation(firstStationName)
+                .then()
+                .extract().jsonPath().getLong("id");
 
-        RestAssured
-                .given()
-                .log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .body(body2)
-                .when()
-                .post("/stations");
-
-        RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .pathParam("id", stationId)
-                .when()
-                .delete("/stations/{id}");
+        StationAssuredTemplate.createStation(secondStationName);
+        StationAssuredTemplate.deleteStation(stationId);
 
         // when
-        List<String> result = RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .when()
-                .get("/stations")
+        List<String> stationList = StationAssuredTemplate.showStations()
                 .then().log().all()
                 .extract().jsonPath().getList("name", String.class);
 
         // then
-        Assertions.assertThat(result).hasSize(1);
-        Assertions.assertThat(result).containsExactly("station2");
-    }
-
-    private Map<String, String> makeStationRequestBody(String name) {
-        return Map.of("name", name);
+        Assertions.assertThat(stationList).hasSize(1);
+        Assertions.assertThat(stationList).containsExactly(secondStationName);
     }
 }
