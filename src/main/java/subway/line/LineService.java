@@ -8,6 +8,7 @@ import subway.StationRepository;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,5 +57,14 @@ public class LineService {
                 .orElseThrow(() -> new NoSuchElementException("해당하는 노선 정보가 없습니다."));
         line.updateName(updateLineRequest.getName());
         line.updateColor(updateLineRequest.getColor());
+    }
+
+    public void deleteLine(Long lineId) {
+        Line line = lineRepository.findById(lineId)
+                .orElseThrow(() -> new NoSuchElementException("해당하는 노선 정보가 없습니다."));
+        Set<LineStation> lineStations = line.getLineStations();
+
+        lineStationRepository.deleteAll(lineStations);
+        lineRepository.delete(line);
     }
 }

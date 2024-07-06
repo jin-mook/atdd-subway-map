@@ -48,4 +48,12 @@ public class LineController {
         headers.addAll(HttpHeaders.VARY, List.of("Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
         return new ResponseEntity<>(null, headers, HttpStatus.OK.value());
     }
+
+    @DeleteMapping("/lines/{lineId}")
+    public ResponseEntity<Void> deleteLine(@PathVariable Long lineId) {
+        lineService.deleteLine(lineId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.addAll(HttpHeaders.VARY, List.of("Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        return new ResponseEntity<>(null, headers, HttpStatus.NO_CONTENT.value());
+    }
 }

@@ -16,6 +16,8 @@ import subway.util.LineAssuredTemplate;
 import subway.util.StationAssuredTemplate;
 
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
 @Sql(scripts = {"/delete-data.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 @DisplayName("지하철 노선 관리 기능")
@@ -171,10 +173,10 @@ public class LineAcceptanceTest {
     /**
      * Given 지하철 역과 지하철 노선을 생성합니다.
      * When 지하철 노선의 이름과 색 수정을 요청합니다.
-     * Then 정상 처리 요청을 응답받습니다.
+     * Then 해당 노선을 요청했을 때 수정된 정보를 전달받습니다.
      */
     @Test
-    @DisplayName("지하철 노선의 이름과 색 수정 요청을 하면 정상 응답을 받습니다.")
+    @DisplayName("지하철 노선의 이름과 색 수정 요청을 하면 정상 응답을 받습니다. 이후 수정된 정보로 전달을 받습니다.")
     void updateLine() {
         // given
         String upStation = "상행종점역";
@@ -201,7 +203,7 @@ public class LineAcceptanceTest {
         String updateColor = "bg-red-60000";
 
         UpdateLineRequest updateLineRequest = new UpdateLineRequest(updateLineName, updateColor);
-        ExtractableResponse<Response> result = RestAssured
+        ExtractableResponse<Response> updateResult = RestAssured
                 .given().log().all()
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .body(updateLineRequest)
@@ -211,8 +213,76 @@ public class LineAcceptanceTest {
                 .then().log().all()
                 .extract();
 
+        Assertions.assertThat(updateResult.statusCode()).isEqualTo(HttpStatus.OK.value());
+
         // then
-        result.body().equals(null);
-        Assertions.assertThat(result.statusCode()).isEqualTo(HttpStatus.OK.value());
+        ExtractableResponse<Response> findResult = RestAssured
+                .given().log().all()
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .pathParam("lineId", lineId)
+                .when()
+                .get("/lines/{lineId}")
+                .then().log().all()
+                .extract();
+
+        Assertions.assertThat(findResult.statusCode()).isEqualTo(HttpStatus.OK.value());
+        Assertions.assertThat(findResult.jsonPath().getString("name")).isEqualTo(updateLineName);
+        Assertions.assertThat(findResult.jsonPath().getString("color")).isEqualTo(updateColor);
+        Assertions.assertThat(findResult.jsonPath().getList("stations")).hasSize(2)
+                .extracting("name")
+                .contains(upStation, downStation);
+    }
+
+    /**
+     * Given 지하철 역과 지하철 노선을 생성합니다.
+     * When 지하철 노선을 삭제합니다.
+     * Then 전체 노선 목록을 요청할 때 해당 목록은 보이지 않습니다.
+     */
+    @Test
+    @DisplayName("지하철 노선 삭제 요청을 보내면 정상 응답을 전달받습니다. 이후 해당 노선은 보이지 않습니다.")
+    void deleteLine() {
+        // given
+        String upStation = "상행종점역";
+        String downStation = "하행종점역";
+
+        long upStationId = StationAssuredTemplate.createStation(upStation)
+                .then()
+                .extract().jsonPath().getLong("id");
+
+        long downStationId = StationAssuredTemplate.createStation(downStation)
+                .then()
+                .extract().jsonPath().getLong("id");
+
+        String lineName = "신분당선";
+        String color = "bg-red-600";
+        long distance = 10;
+
+        LineRequest lineRequest = new LineRequest(lineName, color, upStationId, downStationId, distance);
+        long lineId = LineAssuredTemplate.createLine(lineRequest)
+                .then().extract().jsonPath().getLong("id");
+
+        // when
+        ExtractableResponse<Response> deleteResult = RestAssured
+                .given().log().all()
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .pathParam("lineId", lineId)
+                .when()
+                .delete("/lines/{lineId}")
+                .then()
+                .extract();
+
+        Assertions.assertThat(deleteResult.statusCode()).isEqualTo(HttpStatus.NO_CONTENT.value());
+
+        // then
+        ExtractableResponse<Response> searchResult = RestAssured
+                .given().log().all()
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .pathParam("lineId", lineId)
+                .when()
+                .get("/lines/{lineId}")
+                .then()
+                .extract();
+
+        Assertions.assertThat(searchResult.statusCode()).isEqualTo(HttpStatus.NO_CONTENT.value());
     }
 }
