@@ -8,6 +8,7 @@ import subway.StationRepository;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -16,6 +17,7 @@ public class LineService {
 
     private final LineRepository lineRepository;
     private final StationRepository stationRepository;
+    private final LineStationRepository lineStationRepository;
 
     public LineResponse saveLine(LineRequest lineRequest) {
 
@@ -25,10 +27,19 @@ public class LineService {
                 .orElseThrow(() -> new NoSuchElementException("해당하는 역 정보가 없습니다."));
 
         Line line = Line.createLine(lineRequest.getName(), lineRequest.getColor());
-        line.addStation(List.of(upStation, downStation));
-
         Line savedLine = lineRepository.save(line);
 
-        return LineResponse.from(savedLine);
+        LineStation upLineStation = new LineStation(savedLine, upStation);
+        LineStation downLineStation = new LineStation(savedLine, downStation);
+
+        List<LineStation> lineStations = lineStationRepository.saveAll(List.of(upLineStation, downLineStation));
+
+        return LineStationMapper.makeOneLineResponse(lineStations);
+    }
+
+    public List<LineResponse> showLines() {
+        List<Line> lines = lineRepository.findAllWithDistinct();
+        return lines.stream().map(LineStationMapper::from)
+                .collect(Collectors.toList());
     }
 }

@@ -1,16 +1,24 @@
 package subway.line;
 
+import aj.org.objectweb.asm.TypeReference;
 import io.restassured.RestAssured;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
+import io.restassured.response.ResponseBodyExtractionOptions;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.jdbc.Sql;
+import subway.util.LineAssuredTemplate;
 import subway.util.StationAssuredTemplate;
 
+import java.util.List;
+
+@Sql(scripts = {"/delete-data.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 @DisplayName("지하철 노선 관리 기능")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class LineAcceptanceTest {
@@ -42,12 +50,7 @@ public class LineAcceptanceTest {
 
         LineRequest lineRequest = new LineRequest(lineName, color, upStationId, downStationId, distance);
 
-        ExtractableResponse<Response> result = RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .body(lineRequest)
-                .when()
-                .post("/lines")
+        ExtractableResponse<Response> result = LineAssuredTemplate.createLine(lineRequest)
                 .then()
                 .extract();
 
@@ -57,6 +60,65 @@ public class LineAcceptanceTest {
         Assertions.assertThat(result.body().jsonPath().getString("color")).isEqualTo(color);
         Assertions.assertThat(result.body().jsonPath().getList("stations")).hasSize(2)
                 .extracting("name")
-                .containsExactly(upStation, downStation);
+                .contains(upStation, downStation);
+    }
+
+    /**
+     * Given 노선에 2개의 지하철을 등록한다.
+     * When 관리자가 노선 목록을 조회한다.
+     * Then 모든 지하철 노선 목록이 반환된다.
+     */
+    @Test
+    @DisplayName("지하철 노선 목록을 조회하면 모든 지하철 노선 목록이 반환된다.")
+    void showAllLines() {
+        // given
+        String upStation = "상행종점역";
+        String downStation = "하행종점역";
+        String newStation = "새로운지하쳘역";
+
+        long upStationId = StationAssuredTemplate.createStation(upStation)
+                .then()
+                .extract().jsonPath().getLong("id");
+
+        long downStationId = StationAssuredTemplate.createStation(downStation)
+                .then()
+                .extract().jsonPath().getLong("id");
+
+        long newStationId = StationAssuredTemplate.createStation(newStation)
+                .then()
+                .extract().jsonPath().getLong("id");
+
+        LineAssuredTemplate.createLine(new LineRequest("신분당선", "bg-red-600", upStationId, downStationId, 10));
+        LineAssuredTemplate.createLine(new LineRequest("2호선", "bg-green-600", upStationId, newStationId, 20));
+
+        // when
+        ExtractableResponse<Response> result = RestAssured
+                .given().log().all()
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .when()
+                .get("/lines")
+                .then().log().all()
+                .extract();
+
+        // then
+        List<LineResponse> responseData = result.jsonPath().getList(".", LineResponse.class);
+        Assertions.assertThat(result.statusCode()).isEqualTo(HttpStatus.OK.value());
+        Assertions.assertThat(responseData).hasSize(2);
+        Assertions.assertThat(responseData).extracting("name")
+                .contains("신분당선", "2호선");
+
+        Assertions.assertThat(responseData.get(0).getStations()).hasSize(2)
+                .extracting("id", "name")
+                .contains(
+                        Tuple.tuple(upStationId, upStation),
+                        Tuple.tuple(downStationId, downStation)
+                );
+
+        Assertions.assertThat(responseData.get(1).getStations()).hasSize(2)
+                .extracting("id", "name")
+                .contains(
+                        Tuple.tuple(upStationId, upStation),
+                        Tuple.tuple(newStationId, newStation)
+                );
     }
 }

@@ -1,11 +1,15 @@
 package subway.line;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class LineResponse {
 
     private Long id;
@@ -13,23 +17,10 @@ public class LineResponse {
     private String color;
     private List<LineStationsResponse> stations;
 
-    private LineResponse(Long id, String name, String color, List<LineStationsResponse> stations) {
-        this.id = id;
-        this.name = name;
-        this.color = color;
+    public LineResponse(Line line, List<LineStationsResponse> stations) {
+        this.id = line.getId();
+        this.name = line.getName();
+        this.color = line.getColor();
         this.stations = stations;
-    }
-
-    public static LineResponse from(Line line) {
-        List<LineStationsResponse> stations = line.getStations().stream()
-                .map(station -> new LineStationsResponse(station.getId(), station.getName()))
-                .collect(Collectors.toList());
-
-        return new LineResponse(
-                line.getId(),
-                line.getName(),
-                line.getColor(),
-                stations
-        );
     }
 }

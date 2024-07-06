@@ -7,6 +7,7 @@ import subway.Station;
 
 import javax.persistence.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
 @Entity
@@ -20,8 +21,8 @@ public class Line {
     private String name;
     private String color;
 
-    @OneToMany(mappedBy = "line")
-    private Set<Station> stations = new HashSet<>();
+    @OneToMany(mappedBy = "line", fetch = FetchType.LAZY)
+    private Set<LineStation> lineStations = new HashSet<>();
 
     public static Line createLine(String name, String color) {
         return new Line(name, color);
@@ -32,12 +33,11 @@ public class Line {
         this.color = color;
     }
 
-    public void addStation(List<Station> upStation) {
-        this.stations.addAll(upStation);
-        upStation.forEach(station -> station.addLine(this));
+    public void addStation(LineStation lineStation) {
+        lineStations.add(lineStation);
     }
 
     public Set<Station> getStations() {
-        return Collections.unmodifiableSet(this.stations);
+        return lineStations.stream().map(LineStation::getStation).collect(Collectors.toUnmodifiableSet());
     }
 }
