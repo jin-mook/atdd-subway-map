@@ -37,7 +37,17 @@ public class Line {
         lineStations.add(lineStation);
     }
 
+
+
     public Set<Station> getStations() {
         return lineStations.stream().map(LineStation::getStation).collect(Collectors.toUnmodifiableSet());
+    }
+
+    public void updateName(String newName) {
+        this.name = newName;
+    }
+
+    public void updateColor(String newColor) {
+        this.color = newColor;
     }
 }

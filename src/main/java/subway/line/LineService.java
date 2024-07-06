@@ -50,4 +50,11 @@ public class LineService {
                 .orElseThrow(() -> new NoSuchElementException("해당하는 노선 정보가 없습니다."));
         return LineStationMapper.from(line);
     }
+
+    public void updateLine(Long lineId, UpdateLineRequest updateLineRequest) {
+        Line line = lineRepository.findById(lineId)
+                .orElseThrow(() -> new NoSuchElementException("해당하는 노선 정보가 없습니다."));
+        line.updateName(updateLineRequest.getName());
+        line.updateColor(updateLineRequest.getColor());
+    }
 }

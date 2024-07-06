@@ -17,4 +17,9 @@ public class LineAssuredTemplate {
                 .when()
                 .post("/lines");
     }
+
+    public static Response updateLine() {
+
+        return null;
+    }
 }

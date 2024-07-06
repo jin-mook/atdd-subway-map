@@ -1,11 +1,14 @@
 package subway.line;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class LineRequest {
 
     @NotBlank
@@ -37,8 +40,5 @@ public class LineRequest {
         this.upStationId = upStationId;
         this.downStationId = downStationId;
         this.distance = distance;
-    }
-
-    private LineRequest() {
     }
 }

@@ -34,10 +34,18 @@ public class LineController {
 
     @GetMapping("/lines/{lineId}")
     public ResponseEntity<LineResponse> showLine(@PathVariable Long lineId) {
-        System.out.println("lineId = " + lineId);
         LineResponse data = lineService.showLine(lineId);
         HttpHeaders headers = new HttpHeaders();
         headers.addAll(HttpHeaders.VARY, List.of("Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
         return new ResponseEntity<>(data, headers, HttpStatus.OK);
+    }
+
+    @PutMapping("/lines/{lineId}")
+    public ResponseEntity<Void> updateLine(@PathVariable Long lineId,
+                                           @Validated @RequestBody UpdateLineRequest updateLineRequest) {
+        lineService.updateLine(lineId, updateLineRequest);
+        HttpHeaders headers = new HttpHeaders();
+        headers.addAll(HttpHeaders.VARY, List.of("Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        return new ResponseEntity<>(null, headers, HttpStatus.OK.value());
     }
 }

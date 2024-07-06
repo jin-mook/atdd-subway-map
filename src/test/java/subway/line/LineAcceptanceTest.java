@@ -3,6 +3,7 @@ package subway.line;
 import io.restassured.RestAssured;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.DisplayName;
@@ -172,14 +173,46 @@ public class LineAcceptanceTest {
      * When 지하철 노선의 이름과 색 수정을 요청합니다.
      * Then 정상 처리 요청을 응답받습니다.
      */
-//    @Test
-//    @DisplayName("지하철 노선의 이름과 색 수정 요청을 하면 정상 응답을 받습니다.")
-//    void updateLine() {
-//        // given
-//
-//        // when
-//
-//        // then
-//
-//    }
+    @Test
+    @DisplayName("지하철 노선의 이름과 색 수정 요청을 하면 정상 응답을 받습니다.")
+    void updateLine() {
+        // given
+        String upStation = "상행종점역";
+        String downStation = "하행종점역";
+
+        long upStationId = StationAssuredTemplate.createStation(upStation)
+                .then()
+                .extract().jsonPath().getLong("id");
+
+        long downStationId = StationAssuredTemplate.createStation(downStation)
+                .then()
+                .extract().jsonPath().getLong("id");
+
+        String lineName = "신분당선";
+        String color = "bg-red-600";
+        long distance = 10;
+
+        LineRequest lineRequest = new LineRequest(lineName, color, upStationId, downStationId, distance);
+        long lineId = LineAssuredTemplate.createLine(lineRequest)
+                .then().extract().jsonPath().getLong("id");
+
+        // when
+        String updateLineName = "신분분당선";
+        String updateColor = "bg-red-60000";
+
+        UpdateLineRequest updateLineRequest = new UpdateLineRequest(updateLineName, updateColor);
+        ExtractableResponse<Response> result = RestAssured
+                .given().log().all()
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .body(updateLineRequest)
+                .pathParam("lineId", lineId)
+                .when()
+                .put("/lines/{lineId}")
+                .then().log().all()
+                .extract();
+
+        // then
+        result.body().equals(null);
+        Assertions.assertThat(result.statusCode()).isEqualTo(HttpStatus.OK.value());
+    }
 }
