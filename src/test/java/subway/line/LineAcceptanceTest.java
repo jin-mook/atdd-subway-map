@@ -1,10 +1,8 @@
 package subway.line;
 
-import aj.org.objectweb.asm.TypeReference;
 import io.restassured.RestAssured;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
-import io.restassured.response.ResponseBodyExtractionOptions;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.DisplayName;
@@ -121,4 +119,67 @@ public class LineAcceptanceTest {
                         Tuple.tuple(newStationId, newStation)
                 );
     }
+
+    /**
+     * Given 지하철역과 지하철 노선을 등록합니다.
+     * When 등록한 지하철 노선을 조회합니다.
+     * Then 등록한 지하철 노선 정보를 응답받습니다.
+     */
+    @Test
+    @DisplayName("특정 지하철 노선을 조회합니다.")
+    void findLine() {
+        // given
+        String upStation = "상행종점역";
+        String downStation = "하행종점역";
+
+        long upStationId = StationAssuredTemplate.createStation(upStation)
+                .then()
+                .extract().jsonPath().getLong("id");
+
+        long downStationId = StationAssuredTemplate.createStation(downStation)
+                .then()
+                .extract().jsonPath().getLong("id");
+
+        String lineName = "신분당선";
+        String color = "bg-red-600";
+        long distance = 10;
+
+        LineRequest lineRequest = new LineRequest(lineName, color, upStationId, downStationId, distance);
+        long lineId = LineAssuredTemplate.createLine(lineRequest)
+                .then().extract().jsonPath().getLong("id");
+
+        // when
+        ExtractableResponse<Response> result = RestAssured
+                .given().log().all()
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .pathParam("lineId", lineId)
+                .when()
+                .get("/lines/{lineId}")
+                .then().log().all()
+                .extract();
+
+        // then
+        Assertions.assertThat(result.statusCode()).isEqualTo(HttpStatus.OK.value());
+        Assertions.assertThat(result.jsonPath().getString("name")).isEqualTo(lineName);
+        Assertions.assertThat(result.jsonPath().getString("color")).isEqualTo(color);
+        Assertions.assertThat(result.jsonPath().getList("stations")).hasSize(2)
+                .extracting("name")
+                .contains(upStation, downStation);
+    }
+
+    /**
+     * Given 지하철 역과 지하철 노선을 생성합니다.
+     * When 지하철 노선의 이름과 색 수정을 요청합니다.
+     * Then 정상 처리 요청을 응답받습니다.
+     */
+//    @Test
+//    @DisplayName("지하철 노선의 이름과 색 수정 요청을 하면 정상 응답을 받습니다.")
+//    void updateLine() {
+//        // given
+//
+//        // when
+//
+//        // then
+//
+//    }
 }

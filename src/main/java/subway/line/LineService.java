@@ -37,9 +37,17 @@ public class LineService {
         return LineStationMapper.makeOneLineResponse(lineStations);
     }
 
+    @Transactional(readOnly = true)
     public List<LineResponse> showLines() {
         List<Line> lines = lineRepository.findAllWithDistinct();
         return lines.stream().map(LineStationMapper::from)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public LineResponse showLine(Long lineId) {
+        Line line = lineRepository.findDistinctById(lineId)
+                .orElseThrow(() -> new NoSuchElementException("해당하는 노선 정보가 없습니다."));
+        return LineStationMapper.from(line);
     }
 }
