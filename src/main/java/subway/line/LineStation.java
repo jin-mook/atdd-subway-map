@@ -3,7 +3,7 @@ package subway.line;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import subway.Station;
+import subway.station.Station;
 
 import javax.persistence.*;
 

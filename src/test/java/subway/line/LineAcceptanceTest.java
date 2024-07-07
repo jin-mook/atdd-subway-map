@@ -1,28 +1,40 @@
 package subway.line;
 
-import io.restassured.RestAssured;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
-import io.restassured.response.ValidatableResponse;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import subway.util.LineAssuredTemplate;
 import subway.util.StationAssuredTemplate;
 
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
 
 @Sql(scripts = {"/delete-data.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 @DisplayName("지하철 노선 관리 기능")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class LineAcceptanceTest {
+
+    private String upStation;
+    private String downStation;
+
+    private String lineName;
+    private String color;
+    private long distance;
+
+    @BeforeEach
+    void setUp() {
+        this.upStation = "상행종점역";
+        this.downStation = "하행종점역";
+        this.lineName = "신분당선";
+        this.color = "bg-red-600";
+        this.distance = 10;
+    }
 
     /**
      * Given 노선에 연결할 상행종점역, 하행종점역을 먼저 생성한다.
@@ -33,9 +45,6 @@ public class LineAcceptanceTest {
     @Test
     void createLine() {
         // given
-        String upStation = "상행종점역";
-        String downStation = "하행종점역";
-
         long upStationId = StationAssuredTemplate.createStation(upStation)
                 .then()
                 .extract().jsonPath().getLong("id");
@@ -45,10 +54,6 @@ public class LineAcceptanceTest {
                 .extract().jsonPath().getLong("id");
 
         // when
-        String lineName = "신분당선";
-        String color = "bg-red-600";
-        long distance = 10;
-
         LineRequest lineRequest = new LineRequest(lineName, color, upStationId, downStationId, distance);
 
         ExtractableResponse<Response> result = LineAssuredTemplate.createLine(lineRequest)
@@ -73,8 +78,6 @@ public class LineAcceptanceTest {
     @DisplayName("지하철 노선 목록을 조회하면 모든 지하철 노선 목록이 반환된다.")
     void showAllLines() {
         // given
-        String upStation = "상행종점역";
-        String downStation = "하행종점역";
         String newStation = "새로운지하쳘역";
 
         long upStationId = StationAssuredTemplate.createStation(upStation)
@@ -93,11 +96,7 @@ public class LineAcceptanceTest {
         LineAssuredTemplate.createLine(new LineRequest("2호선", "bg-green-600", upStationId, newStationId, 20));
 
         // when
-        ExtractableResponse<Response> result = RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .when()
-                .get("/lines")
+        ExtractableResponse<Response> result = LineAssuredTemplate.searchAllLine()
                 .then().log().all()
                 .extract();
 
@@ -132,9 +131,6 @@ public class LineAcceptanceTest {
     @DisplayName("특정 지하철 노선을 조회합니다.")
     void findLine() {
         // given
-        String upStation = "상행종점역";
-        String downStation = "하행종점역";
-
         long upStationId = StationAssuredTemplate.createStation(upStation)
                 .then()
                 .extract().jsonPath().getLong("id");
@@ -143,21 +139,12 @@ public class LineAcceptanceTest {
                 .then()
                 .extract().jsonPath().getLong("id");
 
-        String lineName = "신분당선";
-        String color = "bg-red-600";
-        long distance = 10;
-
         LineRequest lineRequest = new LineRequest(lineName, color, upStationId, downStationId, distance);
         long lineId = LineAssuredTemplate.createLine(lineRequest)
                 .then().extract().jsonPath().getLong("id");
 
         // when
-        ExtractableResponse<Response> result = RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .pathParam("lineId", lineId)
-                .when()
-                .get("/lines/{lineId}")
+        ExtractableResponse<Response> result = LineAssuredTemplate.searchOneLine(lineId)
                 .then().log().all()
                 .extract();
 
@@ -179,9 +166,6 @@ public class LineAcceptanceTest {
     @DisplayName("지하철 노선의 이름과 색 수정 요청을 하면 정상 응답을 받습니다. 이후 수정된 정보로 전달을 받습니다.")
     void updateLine() {
         // given
-        String upStation = "상행종점역";
-        String downStation = "하행종점역";
-
         long upStationId = StationAssuredTemplate.createStation(upStation)
                 .then()
                 .extract().jsonPath().getLong("id");
@@ -189,10 +173,6 @@ public class LineAcceptanceTest {
         long downStationId = StationAssuredTemplate.createStation(downStation)
                 .then()
                 .extract().jsonPath().getLong("id");
-
-        String lineName = "신분당선";
-        String color = "bg-red-600";
-        long distance = 10;
 
         LineRequest lineRequest = new LineRequest(lineName, color, upStationId, downStationId, distance);
         long lineId = LineAssuredTemplate.createLine(lineRequest)
@@ -203,25 +183,14 @@ public class LineAcceptanceTest {
         String updateColor = "bg-red-60000";
 
         UpdateLineRequest updateLineRequest = new UpdateLineRequest(updateLineName, updateColor);
-        ExtractableResponse<Response> updateResult = RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .body(updateLineRequest)
-                .pathParam("lineId", lineId)
-                .when()
-                .put("/lines/{lineId}")
+        ExtractableResponse<Response> updateResult = LineAssuredTemplate.updateLine(updateLineRequest, lineId)
                 .then().log().all()
                 .extract();
 
         Assertions.assertThat(updateResult.statusCode()).isEqualTo(HttpStatus.OK.value());
 
         // then
-        ExtractableResponse<Response> findResult = RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .pathParam("lineId", lineId)
-                .when()
-                .get("/lines/{lineId}")
+        ExtractableResponse<Response> findResult = LineAssuredTemplate.searchOneLine(lineId)
                 .then().log().all()
                 .extract();
 
@@ -242,9 +211,6 @@ public class LineAcceptanceTest {
     @DisplayName("지하철 노선 삭제 요청을 보내면 정상 응답을 전달받습니다. 이후 해당 노선은 보이지 않습니다.")
     void deleteLine() {
         // given
-        String upStation = "상행종점역";
-        String downStation = "하행종점역";
-
         long upStationId = StationAssuredTemplate.createStation(upStation)
                 .then()
                 .extract().jsonPath().getLong("id");
@@ -253,35 +219,20 @@ public class LineAcceptanceTest {
                 .then()
                 .extract().jsonPath().getLong("id");
 
-        String lineName = "신분당선";
-        String color = "bg-red-600";
-        long distance = 10;
-
         LineRequest lineRequest = new LineRequest(lineName, color, upStationId, downStationId, distance);
         long lineId = LineAssuredTemplate.createLine(lineRequest)
                 .then().extract().jsonPath().getLong("id");
 
         // when
-        ExtractableResponse<Response> deleteResult = RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .pathParam("lineId", lineId)
-                .when()
-                .delete("/lines/{lineId}")
-                .then()
+        ExtractableResponse<Response> deleteResult = LineAssuredTemplate.deleteOneLine(lineId)
+                .then().log().all()
                 .extract();
 
         Assertions.assertThat(deleteResult.statusCode()).isEqualTo(HttpStatus.NO_CONTENT.value());
 
         // then
-        ExtractableResponse<Response> searchResult = RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .pathParam("lineId", lineId)
-                .when()
-                .get("/lines/{lineId}")
-                .then()
-                .extract();
+        ExtractableResponse<Response> searchResult = LineAssuredTemplate.searchOneLine(lineId)
+                .then().extract();
 
         Assertions.assertThat(searchResult.statusCode()).isEqualTo(HttpStatus.NO_CONTENT.value());
     }
