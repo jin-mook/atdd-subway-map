@@ -3,11 +3,12 @@ package subway.line;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import subway.exception.NoLineException;
+import subway.exception.NoStationException;
 import subway.station.Station;
 import subway.station.StationRepository;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,11 +24,11 @@ public class LineService {
     public LineResponse saveLine(LineRequest lineRequest) {
 
         Station upStation = stationRepository.findById(lineRequest.getUpStationId())
-                .orElseThrow(() -> new NoSuchElementException("해당하는 역 정보가 없습니다."));
+                .orElseThrow(NoStationException::new);
         Station downStation = stationRepository.findById(lineRequest.getDownStationId())
-                .orElseThrow(() -> new NoSuchElementException("해당하는 역 정보가 없습니다."));
+                .orElseThrow(NoStationException::new);
 
-        Line line = Line.createLine(lineRequest.getName(), lineRequest.getColor());
+        Line line = new Line(lineRequest.getName(), lineRequest.getColor(), lineRequest.getDistance());
         Line savedLine = lineRepository.save(line);
 
         LineStation upLineStation = new LineStation(savedLine, upStation);
@@ -48,20 +49,20 @@ public class LineService {
     @Transactional(readOnly = true)
     public LineResponse showLine(Long lineId) {
         Line line = lineRepository.findDistinctById(lineId)
-                .orElseThrow(() -> new NoSuchElementException("해당하는 노선 정보가 없습니다."));
+                .orElseThrow(NoLineException::new);
         return LineStationMapper.from(line);
     }
 
     public void updateLine(Long lineId, UpdateLineRequest updateLineRequest) {
         Line line = lineRepository.findById(lineId)
-                .orElseThrow(() -> new NoSuchElementException("해당하는 노선 정보가 없습니다."));
+                .orElseThrow(NoLineException::new);
         line.updateName(updateLineRequest.getName());
         line.updateColor(updateLineRequest.getColor());
     }
 
     public void deleteLine(Long lineId) {
         Line line = lineRepository.findById(lineId)
-                .orElseThrow(() -> new NoSuchElementException("해당하는 노선 정보가 없습니다."));
+                .orElseThrow(NoLineException::new);
         Set<LineStation> lineStations = line.getLineStations();
 
         lineStationRepository.deleteAll(lineStations);

@@ -1,11 +1,14 @@
 package subway.station;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import subway.common.SuccessResponse;
 
 import java.net.URI;
 import java.util.List;
 
+@RequestMapping("/stations")
 @RestController
 public class StationController {
     private StationService stationService;
@@ -14,20 +17,23 @@ public class StationController {
         this.stationService = stationService;
     }
 
-    @PostMapping("/stations")
+    @PostMapping
     public ResponseEntity<StationResponse> createStation(@RequestBody StationRequest stationRequest) {
         StationResponse station = stationService.saveStation(stationRequest);
-        return ResponseEntity.created(URI.create("/stations/" + station.getId())).body(station);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(HttpHeaders.LOCATION, "/lines/" + station.getId());
+        return SuccessResponse.created(station, httpHeaders);
     }
 
-    @GetMapping(value = "/stations")
+    @GetMapping
     public ResponseEntity<List<StationResponse>> showStations() {
-        return ResponseEntity.ok().body(stationService.findAllStations());
+        return SuccessResponse.ok(stationService.findAllStations());
     }
 
-    @DeleteMapping("/stations/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteStation(@PathVariable Long id) {
         stationService.deleteStationById(id);
-        return ResponseEntity.noContent().build();
+        return SuccessResponse.noContent();
     }
 }

@@ -13,7 +13,7 @@ class LineStationTest {
         // given
         Station upStation = new Station("강남역");
         Station downStation = new Station("양재역");
-        Line line = Line.createLine("신분당선", "red");
+        Line line = new Line("신분당선", "red", 10L);
 
         // when
         LineStation upLineStation = new LineStation(line, upStation);

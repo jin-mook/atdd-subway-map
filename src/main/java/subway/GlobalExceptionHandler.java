@@ -4,14 +4,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.util.NoSuchElementException;
+import subway.exception.NoLineException;
+import subway.exception.NoStationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Void> noElementException(NoSuchElementException exception) {
+    @ExceptionHandler({NoLineException.class, NoStationException.class})
+    public ResponseEntity<Void> noElementException() {
         return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
     }
 }

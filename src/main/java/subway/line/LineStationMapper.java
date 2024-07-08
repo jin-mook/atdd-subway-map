@@ -5,6 +5,9 @@ import java.util.stream.Collectors;
 
 public class LineStationMapper {
 
+    private LineStationMapper() {
+    }
+
     public static LineResponse makeOneLineResponse(List<LineStation> lineStations) {
         if (lineStations.size() < 1) {
             throw new IllegalArgumentException("LineStation 값은 필수 입니다.");
@@ -24,7 +27,9 @@ public class LineStationMapper {
     }
 
     public static LineResponse from(Line line) {
-        List<LineStationsResponse> stations = line.getLineStations().stream().map(LineStation::getStation)
+        List<LineStationsResponse> stations = line.getLineStations()
+                .stream()
+                .map(LineStation::getStation)
                 .map(station -> new LineStationsResponse(station.getId(), station.getName()))
                 .collect(Collectors.toList());
 
