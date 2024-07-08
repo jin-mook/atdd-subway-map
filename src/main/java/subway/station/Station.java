@@ -1,4 +1,6 @@
-package subway;
+package subway.station;
+
+import subway.line.Line;
 
 import javax.persistence.*;
 
@@ -10,7 +12,15 @@ public class Station {
     @Column(length = 20, nullable = false)
     private String name;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "line_id")
+    private Line line;
+
     public Station() {
+    }
+
+    public void addLine(Line line) {
+        this.line = line;
     }
 
     public Station(String name) {
@@ -23,5 +33,9 @@ public class Station {
 
     public String getName() {
         return name;
+    }
+
+    public Line getLine() {
+        return line;
     }
 }
