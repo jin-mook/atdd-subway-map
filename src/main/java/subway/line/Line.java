@@ -3,16 +3,11 @@ package subway.line;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import subway.exception.SameUpAndDownStationException;
-import subway.station.Station;
+import subway.section.Section;
+import subway.section.Sections;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
-import javax.persistence.JoinColumn;
+import javax.persistence.*;
+import java.util.List;
 
 @Getter
 @Entity
@@ -25,24 +20,16 @@ public class Line {
 
     private String name;
     private String color;
-    private Long distance;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "up_station_id")
-    private Station upStation;
+    @Embedded
+    private Sections sections = new Sections();
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "down_station_id")
-    private Station downStation;
+    public Line(String name, String color, Section section) {
+        this.name = name;
+        this.color = color;
 
-    public Line(LineInfoDto lineInfoDto, Station upStation, Station downStation) {
-        if (lineInfoDto.getDistance() <= 0) {
-            throw new IllegalArgumentException("distance 값이 올바르지 않습니다.");
-        }
-        this.name = lineInfoDto.getName();
-        this.color = lineInfoDto.getColor();
-        this.distance = lineInfoDto.getDistance();
-        addUpAndDownStation(upStation, downStation);
+        section.addLine(this);
+        sections.addSection(section);
     }
 
     public void updateName(String newName) {
@@ -53,11 +40,7 @@ public class Line {
         this.color = newColor;
     }
 
-    private void addUpAndDownStation(Station upStation, Station downStation) {
-        if (upStation.equals(downStation)) {
-            throw new SameUpAndDownStationException();
-        }
-        this.upStation = upStation;
-        this.downStation = downStation;
+    public List<Section> getSections() {
+        return this.sections.getSections();
     }
 }

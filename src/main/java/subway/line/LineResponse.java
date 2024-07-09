@@ -25,8 +25,9 @@ public class LineResponse {
     }
 
     public static LineResponse from(Line line) {
-        List<LineStationsResponse> stationList = Stream.of(line.getUpStation(), line.getDownStation())
-                .map(station -> new LineStationsResponse(station.getId(), station.getName()))
+        List<LineStationsResponse> stationList = line.getSections().stream()
+                .flatMap(section -> Stream.of(new LineStationsResponse(section.getUpStation()),
+                        new LineStationsResponse(section.getDownStation())))
                 .collect(Collectors.toList());
 
         return new LineResponse(line, stationList);

@@ -1,15 +1,19 @@
 package subway.line;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import subway.station.Station;
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class LineStationsResponse {
 
     private Long id;
     private String name;
 
-    public LineStationsResponse(Long id, String name) {
-        this.id = id;
-        this.name = name;
+    public LineStationsResponse(Station station) {
+        this.id = station.getId();
+        this.name = station.getName();
     }
 }
