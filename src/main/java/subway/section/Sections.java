@@ -1,5 +1,7 @@
 package subway.section;
 
+import subway.exception.NotSameUpAndDownStationException;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
 import javax.persistence.FetchType;
@@ -21,13 +23,14 @@ public class Sections {
             return;
         }
 
-        throw new IllegalArgumentException();
+        throw new NotSameUpAndDownStationException();
     }
 
     private boolean canConnectedWithNewSection(Section newSection) {
         Section lastSection = sections.get(sections.size() - 1);
 
-        return lastSection.isDownStationSameWithNewUpStation(newSection) && !alreadyHasNewDownStation(newSection);
+        return lastSection.isDownStationSameWithNewUpStation(newSection)
+                && !alreadyHasNewDownStation(newSection);
     }
 
     private boolean alreadyHasNewDownStation(Section newSection) {

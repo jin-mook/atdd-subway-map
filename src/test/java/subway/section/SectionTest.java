@@ -3,7 +3,7 @@ package subway.section;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import subway.exception.SameUpAndDownStationException;
+import subway.exception.NotSameUpAndDownStationException;
 import subway.station.StationFixtures;
 
 class SectionTest {
@@ -26,6 +26,6 @@ class SectionTest {
         // when
         // then
         Assertions.assertThatThrownBy(() -> new Section(StationFixtures.UP_STATION, StationFixtures.UP_STATION, 10L))
-                .isInstanceOf(SameUpAndDownStationException.class);
+                .isInstanceOf(NotSameUpAndDownStationException.class);
     }
 }

@@ -3,6 +3,7 @@ package subway.section;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import subway.exception.NotSameUpAndDownStationException;
 import subway.station.StationFixtures;
 
 class SectionsTest {
@@ -19,7 +20,7 @@ class SectionsTest {
         // when
         // then
         Assertions.assertThatThrownBy(() -> sections.addSection(newSection))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(NotSameUpAndDownStationException.class);
     }
 
     @DisplayName("새로운 구역의 하행역이 기존 구역에 존재한다면 에러가 발생합니다.")
@@ -40,7 +41,7 @@ class SectionsTest {
 
         // then
         Assertions.assertThatThrownBy(() -> sections.addSection(thirdSection))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(NotSameUpAndDownStationException.class);
     }
 
     @DisplayName("기존 구역이 존재하지 않으면 신규 구역을 추가합니다.")

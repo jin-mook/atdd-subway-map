@@ -234,6 +234,6 @@ public class LineAcceptanceTest {
         ExtractableResponse<Response> searchResult = LineAssuredTemplate.searchOneLine(lineId)
                 .then().extract();
 
-        Assertions.assertThat(searchResult.statusCode()).isEqualTo(HttpStatus.NO_CONTENT.value());
+        Assertions.assertThat(searchResult.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
     }
 }

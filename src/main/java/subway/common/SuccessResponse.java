@@ -13,6 +13,11 @@ public class SuccessResponse {
         return new ResponseEntity<>(data, httpHeaders, HttpStatus.CREATED);
     }
 
+    public static <T> ResponseEntity<T> created(T data) {
+        HttpHeaders httpHeaders = makeDefaultOptionHeaders();
+        return new ResponseEntity<>(data, httpHeaders, HttpStatus.CREATED);
+    }
+
     public static <T> ResponseEntity<T> ok(T data) {
         HttpHeaders httpHeaders = makeDefaultOptionHeaders();
         return new ResponseEntity<>(data, httpHeaders, HttpStatus.OK);

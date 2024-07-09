@@ -28,8 +28,13 @@ public class Line {
         this.name = name;
         this.color = color;
 
-        section.addLine(this);
         sections.addSection(section);
+        section.addLine(this);
+    }
+
+    public void addSection(Section section) {
+        sections.addSection(section);
+        section.addLine(this);
     }
 
     public void updateName(String newName) {
