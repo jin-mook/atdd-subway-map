@@ -16,6 +16,7 @@ public class Section {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "line_id")
     private Line line;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

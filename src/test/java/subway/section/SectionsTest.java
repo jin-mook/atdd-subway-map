@@ -3,6 +3,7 @@ package subway.section;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import subway.exception.CannotDeleteSectionException;
 import subway.exception.NotSameUpAndDownStationException;
 import subway.station.StationFixtures;
 
@@ -70,5 +71,61 @@ class SectionsTest {
         sections.addSection(newSection);
         // then
         Assertions.assertThat(sections.getSections()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("마지막 역을 삭제할 때 구역이 존재하지 않는다면 에러가 발생합니다.")
+    void noSection() {
+        // given
+        Sections sections = new Sections();
+        // when
+        // then
+        Assertions.assertThatThrownBy(() -> sections.getDeleteTargetSection(StationFixtures.DOWN_STATION.getId()))
+                .isInstanceOf(CannotDeleteSectionException.class)
+                .hasMessage("구간을 삭제할 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("구역이 한 개만 존재한다면 에러가 발생합니다.")
+    void oneSection() {
+        // given
+        Sections sections = new Sections();
+        Section section = new Section(StationFixtures.UP_STATION, StationFixtures.DOWN_STATION, 10L);
+        sections.addSection(section);
+        // when
+        // then
+        Assertions.assertThatThrownBy(() -> sections.getDeleteTargetSection(StationFixtures.DOWN_STATION.getId()))
+                .isInstanceOf(CannotDeleteSectionException.class)
+                .hasMessage("구간을 삭제할 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("전달받은 역 정보가 마지막 구간의 하행역이 아닌경우 에러가 발생합니다.")
+    void noLastStation() {
+        // given
+        Sections sections = new Sections();
+        Section firstSection = new Section(StationFixtures.UP_STATION, StationFixtures.DOWN_STATION, 10L);
+        sections.addSection(firstSection);
+        Section secondSection = new Section(StationFixtures.DOWN_STATION, StationFixtures.NEW_UP_STATION, 20L);
+        sections.addSection(secondSection);
+        // when
+        // then
+        Assertions.assertThatThrownBy(() -> sections.getDeleteTargetSection(StationFixtures.NEW_DOWN_STATION.getId()))
+                .isInstanceOf(CannotDeleteSectionException.class);
+    }
+
+    @Test
+    @DisplayName("전달받은 역 정보가 2개 이상의 구간의 마지막 하행역인 경우 해당 구간을 전달합니다.")
+    void targetSection() {
+        // given
+        Sections sections = new Sections();
+        Section firstSection = new Section(StationFixtures.UP_STATION, StationFixtures.DOWN_STATION, 10L);
+        sections.addSection(firstSection);
+        Section secondSection = new Section(StationFixtures.DOWN_STATION, StationFixtures.NEW_UP_STATION, 20L);
+        sections.addSection(secondSection);
+        // when
+        Section targetSection = sections.getDeleteTargetSection(StationFixtures.NEW_UP_STATION.getId());
+        // then
+        Assertions.assertThat(targetSection).isEqualTo(secondSection);
     }
 }

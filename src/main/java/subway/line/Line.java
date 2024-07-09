@@ -28,13 +28,20 @@ public class Line {
         this.name = name;
         this.color = color;
 
-        sections.addSection(section);
-        section.addLine(this);
+        this.addSection(section);
     }
 
     public void addSection(Section section) {
         sections.addSection(section);
         section.addLine(this);
+    }
+
+    public Section findDeleteTargetSection(Long stationId) {
+        return sections.getDeleteTargetSection(stationId);
+    }
+
+    public void deleteSection(Section section) {
+        sections.deleteSection(section);
     }
 
     public void updateName(String newName) {

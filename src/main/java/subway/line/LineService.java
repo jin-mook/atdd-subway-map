@@ -3,11 +3,9 @@ package subway.line;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import subway.exception.NoLineException;
-import subway.exception.NoStationException;
+import subway.exception.NoLineExistException;
 import subway.section.Section;
 import subway.station.Station;
-import subway.station.StationRepository;
 import subway.station.StationService;
 
 import java.util.List;
@@ -35,7 +33,7 @@ public class LineService {
     }
 
     @Transactional(readOnly = true)
-    public List<LineResponse> showLines() {
+    public List<LineResponse> findLines() {
         List<Line> lines = lineRepository.findAllWithSectionsAndStations();
 
         return lines.stream()
@@ -44,23 +42,29 @@ public class LineService {
     }
 
     @Transactional(readOnly = true)
-    public LineResponse showLine(Long lineId) {
-        Line line = lineRepository.findById(lineId)
-                .orElseThrow(NoLineException::new);
+    public LineResponse findLineResponse(Long lineId) {
+        Line line = lineRepository.findByIdWithSectionsAndStations(lineId)
+                .orElseThrow(NoLineExistException::new);
 
         return LineResponse.from(line);
     }
 
+    @Transactional(readOnly = true)
+    public Line findLine(Long lineId) {
+        return lineRepository.findByIdWithSectionsAndStations(lineId)
+                .orElseThrow(NoLineExistException::new);
+    }
+
     public void updateLine(Long lineId, UpdateLineRequest updateLineRequest) {
         Line line = lineRepository.findById(lineId)
-                .orElseThrow(NoLineException::new);
+                .orElseThrow(NoLineExistException::new);
         line.updateName(updateLineRequest.getName());
         line.updateColor(updateLineRequest.getColor());
     }
 
     public void deleteLine(Long lineId) {
         Line line = lineRepository.findById(lineId)
-                .orElseThrow(NoLineException::new);
+                .orElseThrow(NoLineExistException::new);
         lineRepository.delete(line);
     }
 }

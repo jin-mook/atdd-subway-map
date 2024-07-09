@@ -1,12 +1,14 @@
 package subway.line;
 
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import subway.station.Station;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@EqualsAndHashCode
 public class LineStationsResponse {
 
     private Long id;

@@ -27,13 +27,13 @@ public class LineController {
 
     @GetMapping
     public ResponseEntity<List<LineResponse>> showLines() {
-        List<LineResponse> data = lineService.showLines();
+        List<LineResponse> data = lineService.findLines();
         return SuccessResponse.ok(data);
     }
 
     @GetMapping("/{lineId}")
     public ResponseEntity<LineResponse> showLine(@PathVariable Long lineId) {
-        LineResponse data = lineService.showLine(lineId);
+        LineResponse data = lineService.findLineResponse(lineId);
         return SuccessResponse.ok(data);
     }
 

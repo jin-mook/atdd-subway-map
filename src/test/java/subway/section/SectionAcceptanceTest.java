@@ -1,19 +1,19 @@
 package subway.section;
 
-import io.restassured.RestAssured;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import subway.line.LineRequest;
 import subway.line.LineStationsResponse;
 import subway.station.StationFixtures;
 import subway.util.LineAssuredTemplate;
+import subway.util.SectionAssuredTemplate;
 import subway.util.StationAssuredTemplate;
 
 @Sql(scripts = {"/delete-data.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -43,15 +43,9 @@ public class SectionAcceptanceTest {
                 .then().extract().jsonPath().getLong("id");
 
         // when
-        ExtractableResponse<Response> result = RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .body(new SectionRequest(newUpStationId, newDownStationId, 10L))
-                .pathParam("lineId", lineId)
-                .when()
-                .post("/lines/{lineId}/sections")
-                .then().log().all()
-                .extract();
+        SectionRequest sectionRequest = new SectionRequest(newUpStationId, newDownStationId, 10L);
+        ExtractableResponse<Response> result = SectionAssuredTemplate.addSection(lineId, sectionRequest)
+                .then().log().all().extract();
 
         // then
         Assertions.assertThat(result.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
@@ -74,16 +68,12 @@ public class SectionAcceptanceTest {
 
         long lineId = LineAssuredTemplate.createLine(new LineRequest("신분당선", "red", upStationId, downStationId, 10L))
                 .then().extract().jsonPath().getLong("id");
+
         // when
-        ExtractableResponse<Response> result = RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .body(new SectionRequest(downStationId, upStationId, 10L))
-                .pathParam("lineId", lineId)
-                .when()
-                .post("/lines/{lineId}/sections")
-                .then().log().all()
-                .extract();
+        SectionRequest sectionRequest = new SectionRequest(downStationId, upStationId, 10L);
+        ExtractableResponse<Response> result = SectionAssuredTemplate.addSection(lineId, sectionRequest)
+                .then().log().all().extract();
+
         // then
         Assertions.assertThat(result.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
         Assertions.assertThat(result.jsonPath().getString("message")).isEqualTo("구간 정보가 올바르지 않습니다.");
@@ -109,25 +99,116 @@ public class SectionAcceptanceTest {
                 .then().extract().jsonPath().getLong("id");
 
         // when
-        ExtractableResponse<Response> result = RestAssured
-                .given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .body(new SectionRequest(downStationId, newDownStationId, 10L))
-                .pathParam("lineId", lineId)
-                .when()
-                .post("/lines/{lineId}/sections")
-                .then().log().all()
-                .extract();
+        SectionRequest sectionRequest = new SectionRequest(downStationId, newDownStationId, 10L);
+        ExtractableResponse<Response> result = SectionAssuredTemplate.addSection(lineId, sectionRequest)
+                .then().log().all().extract();
 
         // then
         Assertions.assertThat(result.statusCode()).isEqualTo(HttpStatus.CREATED.value());
-        Assertions.assertThat(result.jsonPath().getList("stations", LineStationsResponse.class)).hasSize(4)
+        Assertions.assertThat(result.jsonPath().getList("stations", LineStationsResponse.class)).hasSize(3)
                 .extracting("name")
-                .contains(
+                .containsExactly(
                         StationFixtures.UP_STATION.getName(),
                         StationFixtures.DOWN_STATION.getName(),
-                        StationFixtures.DOWN_STATION.getName(),
                         StationFixtures.NEW_DOWN_STATION.getName()
+                );
+    }
+
+    /**
+     * Given 노선에 구간이 한 개 등록되어 있습니다.
+     * When 노선에 해당 구간을 제거합니다.
+     * Then 구간이 한 개 이므로 제거할 수 없다는 응답을 전달받습니다.
+     */
+    @Test
+    @DisplayName("구간이 한 개인 경우 구간을 제거할 수 없습니다.")
+    void hasOneSection() {
+        // given
+        long upStationId = StationAssuredTemplate.createStation(StationFixtures.UP_STATION.getName())
+                .then().extract().jsonPath().getLong("id");
+        long downStationId = StationAssuredTemplate.createStation(StationFixtures.DOWN_STATION.getName())
+                .then().extract().jsonPath().getLong("id");
+
+        long lineId = LineAssuredTemplate.createLine(new LineRequest("신분당선", "red", upStationId, downStationId, 10L))
+                .then().extract().jsonPath().getLong("id");
+
+        // when
+        ExtractableResponse<Response> result = SectionAssuredTemplate.deleteSection(lineId, downStationId)
+                .then().log().all().extract();
+
+        // then
+        Assertions.assertThat(result.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        Assertions.assertThat(result.jsonPath().getString("message")).isEqualTo("구간을 삭제할 수 없습니다.");
+    }
+
+    /**
+     * Given 노선에 구간이 2개 등록되어 있습니다.
+     * When 노선의 중간 역에 대해 삭제 요청을 보냅니다.
+     * Then 삭제에 실패하고 실패 응답을 전달받습니다.
+     */
+    @Test
+    @DisplayName("삭제하려는 역이 하행 종점역이 아닌 경우 삭제할 수 없습니다.")
+    void notDownStation() {
+        // given
+        long upStationId = StationAssuredTemplate.createStation(StationFixtures.UP_STATION.getName())
+                .then().extract().jsonPath().getLong("id");
+        long downStationId = StationAssuredTemplate.createStation(StationFixtures.DOWN_STATION.getName())
+                .then().extract().jsonPath().getLong("id");
+        long newDownStationId = StationAssuredTemplate.createStation(StationFixtures.NEW_DOWN_STATION.getName())
+                .then().extract().jsonPath().getLong("id");
+
+        long lineId = LineAssuredTemplate.createLine(new LineRequest("신분당선", "red", upStationId, downStationId, 10L))
+                .then().extract().jsonPath().getLong("id");
+
+        SectionRequest sectionRequest = new SectionRequest(downStationId, newDownStationId, 10L);
+        SectionAssuredTemplate.addSection(lineId, sectionRequest);
+
+        // when
+        ExtractableResponse<Response> result = SectionAssuredTemplate.deleteSection(lineId, downStationId)
+                .then().log().all().extract();
+
+        // then
+        Assertions.assertThat(result.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        Assertions.assertThat(result.jsonPath().getString("message")).isEqualTo("구간을 삭제할 수 없습니다.");
+    }
+
+    /**
+     * Given 노선에 구간이 2개 등록되어 있습니다.
+     * When 가장 마지막 하행 종점역에 대한 삭제를 진행합니다.
+     * Then 노선 정보를 요청하면 마지막 하행 종점역이 정상 삭제된 것을 확인할 수 있습니다.
+     */
+    @Test
+    @DisplayName("정상적으로 하행 종점역 삭제가 진행됩니다.")
+    void deleteStation() {
+        // given
+        long upStationId = StationAssuredTemplate.createStation(StationFixtures.UP_STATION.getName())
+                .then().extract().jsonPath().getLong("id");
+        long downStationId = StationAssuredTemplate.createStation(StationFixtures.DOWN_STATION.getName())
+                .then().extract().jsonPath().getLong("id");
+        long newDownStationId = StationAssuredTemplate.createStation(StationFixtures.NEW_DOWN_STATION.getName())
+                .then().extract().jsonPath().getLong("id");
+
+        long lineId = LineAssuredTemplate.createLine(new LineRequest("신분당선", "red", upStationId, downStationId, 10L))
+                .then().extract().jsonPath().getLong("id");
+
+        SectionRequest sectionRequest = new SectionRequest(downStationId, newDownStationId, 10L);
+        SectionAssuredTemplate.addSection(lineId, sectionRequest);
+
+        // when
+        ExtractableResponse<Response> deleteResult = SectionAssuredTemplate.deleteSection(lineId, newDownStationId)
+                .then().log().all().extract();
+
+        Assertions.assertThat(deleteResult.statusCode()).isEqualTo(HttpStatus.NO_CONTENT.value());
+
+        // then
+        ExtractableResponse<Response> lineResult = LineAssuredTemplate.searchOneLine(lineId)
+                .then().log().all().extract();
+
+        Assertions.assertThat(lineResult.statusCode()).isEqualTo(HttpStatus.OK.value());
+        Assertions.assertThat(lineResult.jsonPath().getList("stations", LineStationsResponse.class)).hasSize(2)
+                .extracting("id", "name")
+                .containsExactly(
+                        Tuple.tuple(upStationId, StationFixtures.UP_STATION.getName()),
+                        Tuple.tuple(downStationId, StationFixtures.DOWN_STATION.getName())
                 );
     }
 }
