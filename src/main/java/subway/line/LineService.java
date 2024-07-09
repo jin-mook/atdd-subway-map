@@ -9,7 +9,6 @@ import subway.station.Station;
 import subway.station.StationRepository;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,7 +18,6 @@ public class LineService {
 
     private final LineRepository lineRepository;
     private final StationRepository stationRepository;
-    private final LineStationRepository lineStationRepository;
 
     public LineResponse saveLine(LineRequest lineRequest) {
 
@@ -28,29 +26,27 @@ public class LineService {
         Station downStation = stationRepository.findById(lineRequest.getDownStationId())
                 .orElseThrow(NoStationException::new);
 
-        Line line = new Line(lineRequest.getName(), lineRequest.getColor(), lineRequest.getDistance());
+        Line line = new Line(lineRequest.toLineInfoDto(), upStation, downStation);
         Line savedLine = lineRepository.save(line);
 
-        LineStation upLineStation = new LineStation(savedLine, upStation);
-        LineStation downLineStation = new LineStation(savedLine, downStation);
-
-        List<LineStation> lineStations = lineStationRepository.saveAll(List.of(upLineStation, downLineStation));
-
-        return LineStationMapper.makeOneLineResponse(lineStations);
+        return LineResponse.from(savedLine);
     }
 
     @Transactional(readOnly = true)
     public List<LineResponse> showLines() {
-        List<Line> lines = lineRepository.findAllWithDistinct();
-        return lines.stream().map(LineStationMapper::from)
+        List<Line> lines = lineRepository.findAll();
+
+        return lines.stream()
+                .map(LineResponse::from)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public LineResponse showLine(Long lineId) {
-        Line line = lineRepository.findDistinctById(lineId)
+        Line line = lineRepository.findById(lineId)
                 .orElseThrow(NoLineException::new);
-        return LineStationMapper.from(line);
+
+        return LineResponse.from(line);
     }
 
     public void updateLine(Long lineId, UpdateLineRequest updateLineRequest) {
@@ -63,9 +59,6 @@ public class LineService {
     public void deleteLine(Long lineId) {
         Line line = lineRepository.findById(lineId)
                 .orElseThrow(NoLineException::new);
-        Set<LineStation> lineStations = line.getLineStations();
-
-        lineStationRepository.deleteAll(lineStations);
         lineRepository.delete(line);
     }
 }

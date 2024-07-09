@@ -33,4 +33,8 @@ public class LineRequest {
         this.downStationId = downStationId;
         this.distance = distance;
     }
+
+    public LineInfoDto toLineInfoDto() {
+        return new LineInfoDto(name, color, distance);
+    }
 }
