@@ -4,6 +4,7 @@ import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,6 +23,20 @@ import subway.util.StationAssuredTemplate;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class SectionAcceptanceTest {
 
+    private long upStationId;
+    private long downStationId;
+    private long lineId;
+
+    @BeforeEach
+    void setUp() {
+        this.upStationId = StationAssuredTemplate.createStation(StationFixtures.UP_STATION.getName())
+                .then().extract().jsonPath().getLong("id");
+        this.downStationId = StationAssuredTemplate.createStation(StationFixtures.DOWN_STATION.getName())
+                .then().extract().jsonPath().getLong("id");
+        this.lineId = LineAssuredTemplate.createLine(new LineRequest("신분당선", "red", upStationId, downStationId, 10L))
+                .then().extract().jsonPath().getLong("id");
+    }
+
     /**
      * Given 노선에 구간이 하나 등록되어 있습니다.
      * When 해당 노선에 신규 구간을 추가합니다.
@@ -31,16 +46,9 @@ public class SectionAcceptanceTest {
     @Test
     void invalidSection() {
         // given
-        long upStationId = StationAssuredTemplate.createStation(StationFixtures.UP_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
-        long downStationId = StationAssuredTemplate.createStation(StationFixtures.DOWN_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
         long newUpStationId = StationAssuredTemplate.createStation(StationFixtures.NEW_UP_STATION.getName())
                 .then().extract().jsonPath().getLong("id");
         long newDownStationId = StationAssuredTemplate.createStation(StationFixtures.NEW_DOWN_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
-
-        long lineId = LineAssuredTemplate.createLine(new LineRequest("신분당선", "red", upStationId, downStationId, 10L))
                 .then().extract().jsonPath().getLong("id");
 
         // when
@@ -62,13 +70,6 @@ public class SectionAcceptanceTest {
     @Test
     void existDownStation() {
         // given
-        long upStationId = StationAssuredTemplate.createStation(StationFixtures.UP_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
-        long downStationId = StationAssuredTemplate.createStation(StationFixtures.DOWN_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
-
-        long lineId = LineAssuredTemplate.createLine(new LineRequest("신분당선", "red", upStationId, downStationId, 10L))
-                .then().extract().jsonPath().getLong("id");
 
         // when
         SectionRequest sectionRequest = new SectionRequest(downStationId, upStationId, 10L);
@@ -89,14 +90,7 @@ public class SectionAcceptanceTest {
     @Test
     void addSection() {
         // given
-        long upStationId = StationAssuredTemplate.createStation(StationFixtures.UP_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
-        long downStationId = StationAssuredTemplate.createStation(StationFixtures.DOWN_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
         long newDownStationId = StationAssuredTemplate.createStation(StationFixtures.NEW_DOWN_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
-
-        long lineId = LineAssuredTemplate.createLine(new LineRequest("신분당선", "red", upStationId, downStationId, 10L))
                 .then().extract().jsonPath().getLong("id");
 
         // when
@@ -124,14 +118,6 @@ public class SectionAcceptanceTest {
     @DisplayName("구간이 한 개인 경우 구간을 제거할 수 없습니다.")
     void hasOneSection() {
         // given
-        long upStationId = StationAssuredTemplate.createStation(StationFixtures.UP_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
-        long downStationId = StationAssuredTemplate.createStation(StationFixtures.DOWN_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
-
-        long lineId = LineAssuredTemplate.createLine(new LineRequest("신분당선", "red", upStationId, downStationId, 10L))
-                .then().extract().jsonPath().getLong("id");
-
         // when
         ExtractableResponse<Response> result = SectionAssuredTemplate.deleteSection(lineId, downStationId)
                 .then().log().all().extract();
@@ -150,14 +136,7 @@ public class SectionAcceptanceTest {
     @DisplayName("삭제하려는 역이 하행 종점역이 아닌 경우 삭제할 수 없습니다.")
     void notDownStation() {
         // given
-        long upStationId = StationAssuredTemplate.createStation(StationFixtures.UP_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
-        long downStationId = StationAssuredTemplate.createStation(StationFixtures.DOWN_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
         long newDownStationId = StationAssuredTemplate.createStation(StationFixtures.NEW_DOWN_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
-
-        long lineId = LineAssuredTemplate.createLine(new LineRequest("신분당선", "red", upStationId, downStationId, 10L))
                 .then().extract().jsonPath().getLong("id");
 
         SectionRequest sectionRequest = new SectionRequest(downStationId, newDownStationId, 10L);
@@ -181,14 +160,7 @@ public class SectionAcceptanceTest {
     @DisplayName("정상적으로 하행 종점역 삭제가 진행됩니다.")
     void deleteStation() {
         // given
-        long upStationId = StationAssuredTemplate.createStation(StationFixtures.UP_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
-        long downStationId = StationAssuredTemplate.createStation(StationFixtures.DOWN_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
         long newDownStationId = StationAssuredTemplate.createStation(StationFixtures.NEW_DOWN_STATION.getName())
-                .then().extract().jsonPath().getLong("id");
-
-        long lineId = LineAssuredTemplate.createLine(new LineRequest("신분당선", "red", upStationId, downStationId, 10L))
                 .then().extract().jsonPath().getLong("id");
 
         SectionRequest sectionRequest = new SectionRequest(downStationId, newDownStationId, 10L);
