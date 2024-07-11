@@ -60,7 +60,7 @@ public class Section {
         return downStation;
     }
 
-    public void addLine(Line line) {
+    public void addMappingWithLine(Line line) {
         this.line = line;
     }
 }

@@ -5,9 +5,13 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import subway.section.Section;
 import subway.section.Sections;
+import subway.station.Station;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Getter
 @Entity
@@ -33,7 +37,7 @@ public class Line {
 
     public void addSection(Section section) {
         sections.addSection(section);
-        section.addLine(this);
+        section.addMappingWithLine(this);
     }
 
     public Section findDeleteTargetSection(Long stationId) {
@@ -52,7 +56,10 @@ public class Line {
         this.color = newColor;
     }
 
-    public List<Section> getSections() {
-        return this.sections.getSections();
+    public <R> List<R> mapSectionStations(Function<Station, R> mapper) {
+        return sections.getSections().stream()
+                .flatMap(section -> Stream.of(mapper.apply(section.getUpStation()), mapper.apply(section.getDownStation())))
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

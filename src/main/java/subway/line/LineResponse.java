@@ -3,10 +3,11 @@ package subway.line;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import subway.section.Section;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,11 +28,7 @@ public class LineResponse {
     }
 
     public static LineResponse from(Line line) {
-        List<LineStationsResponse> stationList = line.getSections().stream()
-                .flatMap(section -> Stream.of(new LineStationsResponse(section.getUpStation()),
-                        new LineStationsResponse(section.getDownStation())))
-                .distinct()
-                .collect(Collectors.toList());
+        List<LineStationsResponse> stationList = line.mapSectionStations(LineStationsResponse::new);
 
         return new LineResponse(line, stationList);
     }
