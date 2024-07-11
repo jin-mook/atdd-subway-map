@@ -3,6 +3,7 @@ package subway.line;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import subway.common.ErrorMessage;
 import subway.exception.NoLineExistException;
 import subway.section.Section;
 import subway.station.Station;
@@ -43,28 +44,34 @@ public class LineService {
 
     @Transactional(readOnly = true)
     public LineResponse findLineResponse(Long lineId) {
-        Line line = lineRepository.findByIdWithSectionsAndStations(lineId)
-                .orElseThrow(NoLineExistException::new);
+        Line line = findLineByIdWithSectionsAndStations(lineId);
 
         return LineResponse.from(line);
     }
 
     @Transactional(readOnly = true)
     public Line findLine(Long lineId) {
-        return lineRepository.findByIdWithSectionsAndStations(lineId)
-                .orElseThrow(NoLineExistException::new);
+        return findLineByIdWithSectionsAndStations(lineId);
     }
 
     public void updateLine(Long lineId, UpdateLineRequest updateLineRequest) {
-        Line line = lineRepository.findById(lineId)
-                .orElseThrow(NoLineExistException::new);
+        Line line = findLineById(lineId);
         line.updateName(updateLineRequest.getName());
         line.updateColor(updateLineRequest.getColor());
     }
 
     public void deleteLine(Long lineId) {
-        Line line = lineRepository.findById(lineId)
-                .orElseThrow(NoLineExistException::new);
+        Line line = findLineByIdWithSectionsAndStations(lineId);
         lineRepository.delete(line);
+    }
+
+    private Line findLineByIdWithSectionsAndStations(Long lineId) {
+        return lineRepository.findByIdWithSectionsAndStations(lineId)
+                .orElseThrow(() -> new NoLineExistException(ErrorMessage.NO_LINE_EXIST));
+    }
+
+    private Line findLineById(Long lineId) {
+        return lineRepository.findById(lineId)
+                .orElseThrow(() -> new NoLineExistException(ErrorMessage.NO_LINE_EXIST));
     }
 }

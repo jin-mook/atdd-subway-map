@@ -3,6 +3,7 @@ package subway.section;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import subway.common.ErrorMessage;
 import subway.exception.CannotDeleteSectionException;
 import subway.exception.NotSameUpAndDownStationException;
 import subway.station.StationFixtures;
@@ -82,7 +83,7 @@ class SectionsTest {
         // then
         Assertions.assertThatThrownBy(() -> sections.getDeleteTargetSection(StationFixtures.DOWN_STATION.getId()))
                 .isInstanceOf(CannotDeleteSectionException.class)
-                .hasMessage("구간을 삭제할 수 없습니다.");
+                .hasMessage(ErrorMessage.CANNOT_DELETE_SECTION.getMessage());
     }
 
     @Test
@@ -96,7 +97,7 @@ class SectionsTest {
         // then
         Assertions.assertThatThrownBy(() -> sections.getDeleteTargetSection(StationFixtures.DOWN_STATION.getId()))
                 .isInstanceOf(CannotDeleteSectionException.class)
-                .hasMessage("구간을 삭제할 수 없습니다.");
+                .hasMessage(ErrorMessage.CANNOT_DELETE_SECTION.getMessage());
     }
 
     @Test

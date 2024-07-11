@@ -1,5 +1,6 @@
 package subway.section;
 
+import subway.common.ErrorMessage;
 import subway.exception.CannotDeleteSectionException;
 import subway.exception.NotSameUpAndDownStationException;
 
@@ -24,7 +25,7 @@ public class Sections {
             return;
         }
 
-        throw new NotSameUpAndDownStationException();
+        throw new NotSameUpAndDownStationException(ErrorMessage.NOT_SAME_UP_AND_DOWN_STATION);
     }
 
     private boolean canConnectedWithNewSection(Section newSection) {
@@ -45,11 +46,11 @@ public class Sections {
 
     public Section getDeleteTargetSection(Long stationId) {
         if (sections.size() <= 1) {
-            throw new CannotDeleteSectionException();
+            throw new CannotDeleteSectionException(ErrorMessage.CANNOT_DELETE_SECTION);
         }
 
         if (!isLastStation(stationId)) {
-            throw new CannotDeleteSectionException();
+            throw new CannotDeleteSectionException(ErrorMessage.CANNOT_DELETE_SECTION);
         }
 
         return getLastSection();

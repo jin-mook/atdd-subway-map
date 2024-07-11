@@ -3,7 +3,6 @@ package subway;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import subway.common.ErrorMessage;
 import subway.common.ErrorResponse;
 import subway.exception.CannotDeleteSectionException;
 import subway.exception.NoLineExistException;
@@ -14,17 +13,17 @@ import subway.exception.NotSameUpAndDownStationException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(NoLineExistException.class)
-    public ResponseEntity<ErrorMessage> lineException(Exception exception) {
+    public ResponseEntity<String> lineException(Exception exception) {
         return ErrorResponse.badRequest(exception.getMessage());
     }
 
     @ExceptionHandler({NoStationException.class, NotSameUpAndDownStationException.class})
-    public ResponseEntity<ErrorMessage> stationException(Exception exception) {
+    public ResponseEntity<String> stationException(Exception exception) {
         return ErrorResponse.badRequest(exception.getMessage());
     }
 
     @ExceptionHandler(CannotDeleteSectionException.class)
-    public ResponseEntity<ErrorMessage> sectionException(Exception exception) {
+    public ResponseEntity<String> sectionException(Exception exception) {
         return ErrorResponse.badRequest(exception.getMessage());
     }
 }

@@ -2,6 +2,8 @@ package subway.section;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import subway.common.ErrorMessage;
+import subway.exception.IllegalDistanceValueException;
 import subway.exception.NotSameUpAndDownStationException;
 import subway.line.Line;
 import subway.station.Station;
@@ -31,10 +33,10 @@ public class Section {
 
     public Section(Station upStation, Station downStation, Long distance) {
         if (upStation.equals(downStation)) {
-            throw new NotSameUpAndDownStationException();
+            throw new NotSameUpAndDownStationException(ErrorMessage.NOT_SAME_UP_AND_DOWN_STATION);
         }
         if (distance <= 0) {
-            throw new IllegalArgumentException("distance 값이 올바르지 않습니다.");
+            throw new IllegalDistanceValueException(ErrorMessage.ILLEGAL_DISTANCE_VALUE);
         }
 
         this.upStation = upStation;

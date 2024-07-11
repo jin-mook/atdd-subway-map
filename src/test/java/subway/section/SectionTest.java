@@ -3,6 +3,8 @@ package subway.section;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import subway.common.ErrorMessage;
+import subway.exception.IllegalDistanceValueException;
 import subway.exception.NotSameUpAndDownStationException;
 import subway.station.StationFixtures;
 
@@ -15,8 +17,8 @@ class SectionTest {
         // when
         // then
         Assertions.assertThatThrownBy(() -> new Section(StationFixtures.UP_STATION, StationFixtures.DOWN_STATION, 0L))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("distance 값이 올바르지 않습니다.");
+                .isInstanceOf(IllegalDistanceValueException.class)
+                .hasMessage(ErrorMessage.ILLEGAL_DISTANCE_VALUE.getMessage());
     }
 
     @DisplayName("상행역과 하행역은 같으면 안됩니다.")

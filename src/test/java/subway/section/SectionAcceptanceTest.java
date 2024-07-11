@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
+import subway.common.ErrorMessage;
 import subway.line.LineRequest;
 import subway.line.LineStationsResponse;
 import subway.station.StationFixtures;
@@ -49,7 +50,7 @@ public class SectionAcceptanceTest {
 
         // then
         Assertions.assertThat(result.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-        Assertions.assertThat(result.jsonPath().getString("message")).isEqualTo("구간 정보가 올바르지 않습니다.");
+        Assertions.assertThat(result.body().asString()).isEqualTo(ErrorMessage.NOT_SAME_UP_AND_DOWN_STATION.getMessage());
     }
 
     /**
@@ -76,7 +77,7 @@ public class SectionAcceptanceTest {
 
         // then
         Assertions.assertThat(result.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-        Assertions.assertThat(result.jsonPath().getString("message")).isEqualTo("구간 정보가 올바르지 않습니다.");
+        Assertions.assertThat(result.body().asString()).isEqualTo(ErrorMessage.NOT_SAME_UP_AND_DOWN_STATION.getMessage());
     }
 
     /**
@@ -137,7 +138,7 @@ public class SectionAcceptanceTest {
 
         // then
         Assertions.assertThat(result.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-        Assertions.assertThat(result.jsonPath().getString("message")).isEqualTo("구간을 삭제할 수 없습니다.");
+        Assertions.assertThat(result.body().asString()).isEqualTo(ErrorMessage.CANNOT_DELETE_SECTION.getMessage());
     }
 
     /**
@@ -168,7 +169,7 @@ public class SectionAcceptanceTest {
 
         // then
         Assertions.assertThat(result.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-        Assertions.assertThat(result.jsonPath().getString("message")).isEqualTo("구간을 삭제할 수 없습니다.");
+        Assertions.assertThat(result.body().asString()).isEqualTo(ErrorMessage.CANNOT_DELETE_SECTION.getMessage());
     }
 
     /**
