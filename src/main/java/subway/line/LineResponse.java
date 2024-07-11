@@ -3,13 +3,8 @@ package subway.line;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import subway.section.Section;
 
 import java.util.List;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
