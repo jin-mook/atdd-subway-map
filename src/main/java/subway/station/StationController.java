@@ -1,6 +1,5 @@
 package subway.station;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import subway.common.SuccessResponse;
@@ -20,9 +19,7 @@ public class StationController {
     public ResponseEntity<StationResponse> createStation(@RequestBody StationRequest stationRequest) {
         StationResponse station = stationService.saveStation(stationRequest);
 
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add(HttpHeaders.LOCATION, "/lines/" + station.getId());
-        return SuccessResponse.created(station, httpHeaders);
+        return SuccessResponse.created(station, () -> "/lines/" + station.getId());
     }
 
     @GetMapping

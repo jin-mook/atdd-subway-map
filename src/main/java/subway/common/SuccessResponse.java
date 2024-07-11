@@ -5,11 +5,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public class SuccessResponse {
 
-    public static <T> ResponseEntity<T> created(T data, HttpHeaders httpHeaders) {
-        httpHeaders.addAll(HttpHeaders.VARY, List.of("Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+    public static <T> ResponseEntity<T> created(T data, Supplier<String> locationProvider) {
+        HttpHeaders httpHeaders = makeDefaultOptionHeaders(locationProvider);
         return new ResponseEntity<>(data, httpHeaders, HttpStatus.CREATED);
     }
 
@@ -36,5 +37,11 @@ public class SuccessResponse {
         HttpHeaders headers = new HttpHeaders();
         headers.addAll(HttpHeaders.VARY, List.of("Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
         return headers;
+    }
+
+    private static <T> HttpHeaders makeDefaultOptionHeaders(Supplier<String> locationProvider) {
+        HttpHeaders httpHeaders = makeDefaultOptionHeaders();
+        httpHeaders.add(HttpHeaders.LOCATION, locationProvider.get());
+        return httpHeaders;
     }
 }

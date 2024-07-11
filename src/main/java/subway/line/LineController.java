@@ -1,7 +1,6 @@
 package subway.line;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -20,9 +19,7 @@ public class LineController {
     public ResponseEntity<LineResponse> createLine(@Validated @RequestBody LineRequest lineRequest) {
         LineResponse data = lineService.saveLine(lineRequest);
 
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add(HttpHeaders.LOCATION, "/lines/" + data.getId());
-        return SuccessResponse.created(data, httpHeaders);
+        return SuccessResponse.created(data, () -> "/lines/" + data.getId());
     }
 
     @GetMapping
