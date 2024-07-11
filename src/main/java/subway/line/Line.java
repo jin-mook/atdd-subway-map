@@ -3,11 +3,15 @@ package subway.line;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import subway.section.Section;
+import subway.section.Sections;
 import subway.station.Station;
 
 import javax.persistence.*;
-import java.util.*;
+import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Getter
 @Entity
@@ -21,26 +25,27 @@ public class Line {
     private String name;
     private String color;
 
-    @OneToMany(mappedBy = "line", fetch = FetchType.LAZY)
-    private Set<LineStation> lineStations = new HashSet<>();
+    @Embedded
+    private Sections sections = new Sections();
 
-    public static Line createLine(String name, String color) {
-        return new Line(name, color);
-    }
-
-    private Line(String name, String color) {
+    public Line(String name, String color, Section section) {
         this.name = name;
         this.color = color;
+
+        this.addSection(section);
     }
 
-    public void addStation(LineStation lineStation) {
-        lineStations.add(lineStation);
+    public void addSection(Section section) {
+        sections.addSection(section);
+        section.addMappingWithLine(this);
     }
 
+    public Section findDeleteTargetSection(Long stationId) {
+        return sections.getDeleteTargetSection(stationId);
+    }
 
-
-    public Set<Station> getStations() {
-        return lineStations.stream().map(LineStation::getStation).collect(Collectors.toUnmodifiableSet());
+    public void deleteSection(Section section) {
+        sections.deleteSection(section);
     }
 
     public void updateName(String newName) {
@@ -49,5 +54,12 @@ public class Line {
 
     public void updateColor(String newColor) {
         this.color = newColor;
+    }
+
+    public <R> List<R> mapSectionStations(Function<Station, R> mapper) {
+        return sections.getSections().stream()
+                .flatMap(section -> Stream.of(mapper.apply(section.getUpStation()), mapper.apply(section.getDownStation())))
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

@@ -3,12 +3,13 @@ package subway.line;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import subway.common.ErrorMessage;
+import subway.exception.NoLineExistException;
+import subway.section.Section;
 import subway.station.Station;
-import subway.station.StationRepository;
+import subway.station.StationService;
 
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,54 +18,60 @@ import java.util.stream.Collectors;
 public class LineService {
 
     private final LineRepository lineRepository;
-    private final StationRepository stationRepository;
-    private final LineStationRepository lineStationRepository;
+
+    private final StationService stationService;
 
     public LineResponse saveLine(LineRequest lineRequest) {
 
-        Station upStation = stationRepository.findById(lineRequest.getUpStationId())
-                .orElseThrow(() -> new NoSuchElementException("해당하는 역 정보가 없습니다."));
-        Station downStation = stationRepository.findById(lineRequest.getDownStationId())
-                .orElseThrow(() -> new NoSuchElementException("해당하는 역 정보가 없습니다."));
+        Station upStation = stationService.findById(lineRequest.getUpStationId());
+        Station downStation = stationService.findById(lineRequest.getDownStationId());
 
-        Line line = Line.createLine(lineRequest.getName(), lineRequest.getColor());
+        Section section = new Section(upStation, downStation, lineRequest.getDistance());
+        Line line = new Line(lineRequest.getName(), lineRequest.getColor(), section);
         Line savedLine = lineRepository.save(line);
 
-        LineStation upLineStation = new LineStation(savedLine, upStation);
-        LineStation downLineStation = new LineStation(savedLine, downStation);
-
-        List<LineStation> lineStations = lineStationRepository.saveAll(List.of(upLineStation, downLineStation));
-
-        return LineStationMapper.makeOneLineResponse(lineStations);
+        return LineResponse.from(savedLine);
     }
 
     @Transactional(readOnly = true)
-    public List<LineResponse> showLines() {
-        List<Line> lines = lineRepository.findAllWithDistinct();
-        return lines.stream().map(LineStationMapper::from)
+    public List<LineResponse> findLines() {
+        List<Line> lines = lineRepository.findAllWithSectionsAndStations();
+
+        return lines.stream()
+                .map(LineResponse::from)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public LineResponse showLine(Long lineId) {
-        Line line = lineRepository.findDistinctById(lineId)
-                .orElseThrow(() -> new NoSuchElementException("해당하는 노선 정보가 없습니다."));
-        return LineStationMapper.from(line);
+    public LineResponse findLineResponse(Long lineId) {
+        Line line = findLineByIdWithSectionsAndStations(lineId);
+
+        return LineResponse.from(line);
+    }
+
+    @Transactional(readOnly = true)
+    public Line findLine(Long lineId) {
+        return findLineByIdWithSectionsAndStations(lineId);
     }
 
     public void updateLine(Long lineId, UpdateLineRequest updateLineRequest) {
-        Line line = lineRepository.findById(lineId)
-                .orElseThrow(() -> new NoSuchElementException("해당하는 노선 정보가 없습니다."));
+        Line line = findLineById(lineId);
         line.updateName(updateLineRequest.getName());
         line.updateColor(updateLineRequest.getColor());
     }
 
     public void deleteLine(Long lineId) {
-        Line line = lineRepository.findById(lineId)
-                .orElseThrow(() -> new NoSuchElementException("해당하는 노선 정보가 없습니다."));
-        Set<LineStation> lineStations = line.getLineStations();
-
-        lineStationRepository.deleteAll(lineStations);
+        Line line = findLineByIdWithSectionsAndStations(lineId);
         lineRepository.delete(line);
+    }
+
+    private Line findLineByIdWithSectionsAndStations(Long lineId) {
+        return lineRepository.findByIdWithSectionsAndStations(lineId)
+                .orElseThrow(() -> new NoLineExistException(ErrorMessage.NO_LINE_EXIST));
+    }
+
+    private Line findLineById(Long lineId) {
+        return lineRepository.findById(lineId)
+                .orElseThrow(() -> new NoLineExistException(ErrorMessage.NO_LINE_EXIST));
     }
 }

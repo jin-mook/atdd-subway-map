@@ -1,10 +1,17 @@
 package subway.station;
 
-import subway.line.Line;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Column;
+import java.util.Objects;
 
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Station {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -12,18 +19,12 @@ public class Station {
     @Column(length = 20, nullable = false)
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "line_id")
-    private Line line;
-
-    public Station() {
-    }
-
-    public void addLine(Line line) {
-        this.line = line;
-    }
-
     public Station(String name) {
+        this.name = name;
+    }
+
+    public Station(Long id, String name) {
+        this.id = id;
         this.name = name;
     }
 
@@ -35,7 +36,20 @@ public class Station {
         return name;
     }
 
-    public Line getLine() {
-        return line;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Station station = (Station) o;
+        return Objects.equals(id, station.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

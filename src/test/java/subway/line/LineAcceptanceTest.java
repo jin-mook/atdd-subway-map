@@ -92,8 +92,8 @@ public class LineAcceptanceTest {
                 .then()
                 .extract().jsonPath().getLong("id");
 
-        LineAssuredTemplate.createLine(new LineRequest("신분당선", "bg-red-600", upStationId, downStationId, 10));
-        LineAssuredTemplate.createLine(new LineRequest("2호선", "bg-green-600", upStationId, newStationId, 20));
+        LineAssuredTemplate.createLine(new LineRequest("신분당선", "bg-red-600", upStationId, downStationId, distance));
+        LineAssuredTemplate.createLine(new LineRequest("2호선", "bg-green-600", upStationId, newStationId, distance));
 
         // when
         ExtractableResponse<Response> result = LineAssuredTemplate.searchAllLine()
@@ -234,6 +234,6 @@ public class LineAcceptanceTest {
         ExtractableResponse<Response> searchResult = LineAssuredTemplate.searchOneLine(lineId)
                 .then().extract();
 
-        Assertions.assertThat(searchResult.statusCode()).isEqualTo(HttpStatus.NO_CONTENT.value());
+        Assertions.assertThat(searchResult.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
     }
 }
